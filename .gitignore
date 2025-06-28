@@ -1,0 +1,33 @@
+# Cargo
+/target
+Cargo.lock
+
+# Python (+uv)
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+uv.lock
+.python_version
+
+# Testing artifacts
+profile_stats/
+htmlcov/
+.tox/
+.coverage
+.cache
+**/*.xml
+**/*.svg
+
+# User space
+usr/
+
+
+# Log files
+**/log.log
+**/log.txt
+
+#=========================
+
+# Reconstructed equilibria
+**/**.nc
