@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use ndarray::{Array, Ix1};
+
 #[allow(non_snake_case)]
 #[derive(Debug)]
 pub struct Scalars {
@@ -10,18 +12,19 @@ pub struct Scalars {
 
 #[derive(Debug)]
 pub struct Coords {
-    boozer_theta: Vec<f64>,
-    psi: Vec<f64>,
+    pub boozer_theta: Array<f64, Ix1>,
+    pub psi: Array<f64, Ix1>,
 }
 
 #[derive(Debug)]
 pub struct Nc {
     pub path: PathBuf,
     pub scalars: Scalars,
+    pub coords: Coords,
 }
 
 impl Scalars {
-    fn from_netcdf_file(f: netcdf::File) -> Self {
+    fn from_netcdf_file(f: &netcdf::File) -> Self {
         Scalars {
             Baxis: f
                 .variable("Baxis")
@@ -51,6 +54,26 @@ impl Scalars {
     }
 }
 
+impl Coords {
+    fn from_netcdf_file(f: &netcdf::File) -> Self {
+        let boozer_theta_var = f
+            .variable("boozer_theta")
+            .expect("'boozer_theta' coord not found.");
+        let psi_var = f.variable("psi").expect("'psi' coord not found.");
+
+        let boozer_theta: Vec<f64> = boozer_theta_var
+            .get_values(..)
+            .expect("Error extracting 'boozer_theta' coord");
+        let psi: Vec<f64> = psi_var
+            .get_values(..)
+            .expect("Error extracting 'psi' coord");
+        Coords {
+            boozer_theta: Array::from_vec(boozer_theta),
+            psi: Array::from_vec(psi),
+        }
+    }
+}
+
 impl Nc {
     pub fn open(path: PathBuf) -> Result<Nc, netcdf::Error> {
         let netcdf_file = match netcdf::open(path.to_str().expect("path not found")) {
@@ -58,9 +81,14 @@ impl Nc {
             Err(error) => return Err(error),
         };
 
-        let scalars = Scalars::from_netcdf_file(netcdf_file);
+        let scalars = Scalars::from_netcdf_file(&netcdf_file);
+        let coords = Coords::from_netcdf_file(&netcdf_file);
 
-        let nc = Nc { scalars, path };
+        let nc = Nc {
+            path,
+            scalars,
+            coords,
+        };
 
         Ok(nc)
     }
