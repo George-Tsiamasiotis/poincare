@@ -19,8 +19,8 @@ impl Scalars {
     }
 
     /// Extracts a single valued `Variable`.
-    fn extract_field(f: &netcdf::File, field: &str) -> Result<f64, NcError> {
-        use NcError::*;
+    fn extract_field(f: &netcdf::File, field: &str) -> Result<f64, ScalarError> {
+        use ScalarError::*;
 
         // Extract 'Variable' field from file
         let variable = match f.variable(field) {
@@ -46,14 +46,14 @@ impl std::fmt::Display for Scalars {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Scalars: baxis = {:.5}[T],\traxis = {:.5}[m],\tpsi_wall = {:.5}",
+            "Scalars:\n\tbaxis = {:.5}[T],\n\traxis = {:.5}[m],\n\tpsi_wall = {:.5}",
             self.baxis, self.raxis, self.psi_wall
         )
     }
 }
 
 #[derive(thiserror::Error)]
-enum NcError {
+enum ScalarError {
     #[error("'Error: '{0}' field does not exist.")]
     FieldNotFound(String),
     #[error("Error: '{0}' is not a scalar field.")]
@@ -62,7 +62,7 @@ enum NcError {
     NaNField(String),
 }
 
-impl std::fmt::Debug for NcError {
+impl std::fmt::Debug for ScalarError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "\n\t{}", self)?;
         Ok(())
