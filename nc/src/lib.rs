@@ -3,6 +3,9 @@
 
 mod vars;
 
+use ndarray::{Array, Ix2};
+
+// use crate::vars::bfield::Bfield;
 use crate::vars::coords::Coords;
 use crate::vars::currents::Currents;
 use crate::vars::scalars::Scalars;
@@ -59,4 +62,31 @@ pub(crate) fn extract_1d_var(f: &netcdf::File, field: &str) -> Result<Vec<f64>, 
     };
     let values: Vec<f64> = var.get_values(..)?;
     Ok(values)
+}
+
+// Returns a 2D vector, containing var(ψ, θ)
+pub(crate) fn extract_2d_var(
+    f: &netcdf::File,
+    field: &str,
+) -> Result<Vec<Vec<f64>>, netcdf::Error> {
+    // Shape must be (psi_len, theta_len)
+    let theta_len = f.variable("boozer_theta").unwrap().len();
+    let psi_len = f.variable("psi").unwrap().len();
+    let shape = (psi_len, theta_len);
+
+    // Store in an array first and then convert to 2D vec
+    let mut data: Array<f64, Ix2> = Array::<f64, Ix2>::zeros(shape);
+
+    // Store data to 2D array
+    f.variable(field)
+        .unwrap()
+        .get_into(data.view_mut(), (.., ..))
+        .unwrap();
+
+    // Store data to 2D vec
+    let mut data_vec: Vec<Vec<f64>> = Vec::with_capacity(psi_len);
+    for row in data.rows() {
+        data_vec.push(row.to_vec());
+    }
+    Ok(data_vec)
 }
