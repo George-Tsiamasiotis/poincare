@@ -18,8 +18,13 @@ pub struct Currents {
 impl Currents {
     /// Creates a `Scalars` from the NetCDF file.
     pub(crate) fn from_netcdf_file(f: &netcdf::File) -> Currents {
-        let g = extract_1d_var(f, "g_norm").unwrap();
-        let i = extract_1d_var(f, "I_norm").unwrap();
+        let mut g = extract_1d_var(f, "g_norm").unwrap();
+        let mut i = extract_1d_var(f, "I_norm").unwrap();
+
+        // Extrapolate all arrays so they have a valid value at the axis (psi=0)
+        g.insert(0, g[0]);
+        i.insert(0, 0.0);
+
         let g_len = g.len();
         let i_len = i.len();
         // I is sorted, g is sorted in reverse order

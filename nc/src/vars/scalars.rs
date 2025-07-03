@@ -44,7 +44,7 @@ impl Scalars {
 
 impl std::fmt::Display for Scalars {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
+        writeln!(
             f,
             "Scalars:\n\tbaxis = {:.5}[T],\n\traxis = {:.5}[m],\n\tpsi_wall = {:.5}",
             self.baxis, self.raxis, self.psi_wall

@@ -20,7 +20,12 @@ impl Coords {
     pub fn from_netcdf_file(f: &netcdf::File) -> Coords {
         let boozer_theta: Vec<f64> = extract_1d_var(f, "boozer_theta").unwrap();
         let boozer_theta_len = boozer_theta.len();
-        let psi: Vec<f64> = extract_1d_var(f, "psi").unwrap();
+        let mut psi: Vec<f64> = extract_1d_var(f, "psi").unwrap();
+
+        // Extrapolate psi to later extrapolate all other variables to include a value
+        // at the axis
+        psi.insert(0, 0.0);
+
         let psi_len = psi.len();
 
         // 'boozer_theta' and 'psi' should be sorted

@@ -29,7 +29,24 @@ impl Nc {
             currents: Currents::from_netcdf_file(&netcdf_file),
         };
 
+        Nc::check_dims(&nc);
         Ok(nc)
+    }
+
+    fn check_dims(&self) {
+        let psi_len = self.coords.psi_len;
+        if self.currents.g_len != psi_len {
+            panic!(
+                "'g' dimensions do not match (psi_len = {}, g_len = {})",
+                psi_len, self.currents.g_len
+            )
+        }
+        if self.currents.i_len != psi_len {
+            panic!(
+                "'i' dimensions do not match (psi_len = {}, i_len = {})",
+                psi_len, self.currents.i_len
+            )
+        }
     }
 }
 
