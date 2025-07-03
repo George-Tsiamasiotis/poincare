@@ -4,6 +4,7 @@
 mod vars;
 
 use crate::vars::coords::Coords;
+use crate::vars::currents::Currents;
 use crate::vars::scalars::Scalars;
 use std::path::PathBuf;
 
@@ -13,6 +14,7 @@ pub struct Nc {
     pub path: PathBuf,
     pub scalars: Scalars,
     pub coords: Coords,
+    pub currents: Currents,
 }
 
 impl Nc {
@@ -24,6 +26,7 @@ impl Nc {
             path,
             scalars: Scalars::from_netcdf_file(&netcdf_file),
             coords: Coords::from_netcdf_file(&netcdf_file),
+            currents: Currents::from_netcdf_file(&netcdf_file),
         };
 
         Ok(nc)
@@ -32,9 +35,10 @@ impl Nc {
 
 /// Extracts all values from a coord.
 pub(crate) fn extract_1d_var(f: &netcdf::File, field: &str) -> Result<Vec<f64>, netcdf::Error> {
+    let err_msg = String::from("'") + field + "' field not found in NetCDF file.";
     let var = match f.variable(field) {
         Some(coord) => coord,
-        None => return Err("'{field}' not found in NetCDF file.".into()),
+        None => return Err(err_msg.into()),
     };
     let values: Vec<f64> = var.get_values(..)?;
     Ok(values)
