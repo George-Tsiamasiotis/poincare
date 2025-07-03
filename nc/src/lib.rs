@@ -18,10 +18,7 @@ pub struct Nc {
 impl Nc {
     /// Creates a `Scalars` by extracting data from `f`.
     pub fn open(path: PathBuf) -> Result<Nc, netcdf::Error> {
-        let netcdf_file = match netcdf::open(path.to_str().expect("path not found")) {
-            Ok(nc_file) => nc_file,
-            Err(error) => return Err(error),
-        };
+        let netcdf_file = netcdf::open(path.to_str().expect("Path not found"))?;
 
         let nc = Nc {
             path,
