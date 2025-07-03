@@ -29,3 +29,13 @@ impl Nc {
         Ok(nc)
     }
 }
+
+/// Extracts all values from a coord.
+pub(crate) fn extract_1d_var(f: &netcdf::File, field: &str) -> Result<Vec<f64>, netcdf::Error> {
+    let var = match f.variable(field) {
+        Some(coord) => coord,
+        None => return Err("'{field}' not found in NetCDF file.".into()),
+    };
+    let values: Vec<f64> = var.get_values(..)?;
+    Ok(values)
+}
