@@ -10,34 +10,43 @@ pub struct Scalars {
 
 impl Scalars {
     /// Creates a `Scalars` from the NetCDF file.
-    pub(crate) fn from_netcdf_file(f: &netcdf::File) -> Scalars {
-        Scalars {
-            baxis: Scalars::extract_field(f, "Baxis").unwrap(),
-            raxis: Scalars::extract_field(f, "raxis").unwrap(),
+    pub(crate) fn build(f: &netcdf::File) -> Result<Scalars, (String, &'static str)> {
+        let s = Scalars {
+            baxis: match Scalars::extract_field(f, "baxis") {
+                Ok(val) => val,
+                Err(err) => return Err(("Baxis ".into(), err)),
+            },
+            raxis: match Scalars::extract_field(f, "raxis") {
+                Ok(val) => val,
+                Err(err) => return Err(("raxis ".into(), err)),
+            },
             psi_wall: 1.0, // TODO:
-        }
+        };
+
+        Ok(s)
     }
 
     /// Extracts a single valued `Variable`.
-    fn extract_field(f: &netcdf::File, field: &str) -> Result<f64, ScalarError> {
-        use ScalarError::*;
-
+    fn extract_field(f: &netcdf::File, field: &str) -> Result<f64, &'static str> {
         // Extract 'Variable' field from file
         let variable = match f.variable(field) {
-            Some(variable) => variable,
-            None => return Err(FieldNotFound(field.into())),
+            Some(var) => var,
+            None => return Err("field not found"),
         };
 
         // Make sure the value we extract is indeed scalar
-        if variable.len() != 1 {
-            return Err(NonScalarField(field.into()));
+        match variable.len() {
+            0 => return Err("field is empty."),
+            2.. => return Err("field is not scalar."),
+            1 => (),
         }
 
         // Extract variable's value
         let value = match variable.get_value::<f64, _>(..) {
             Ok(value) => value,
-            Err(_) => return Err(NaNField(field.into())),
+            Err(_) => return Err("field is NaN"),
         };
+
         Ok(value)
     }
 }
@@ -49,22 +58,5 @@ impl std::fmt::Display for Scalars {
             "Scalars:\n\tbaxis = {:.5}[T],\n\traxis = {:.5}[m],\n\tpsi_wall = {:.5}",
             self.baxis, self.raxis, self.psi_wall
         )
-    }
-}
-
-#[derive(thiserror::Error)]
-enum ScalarError {
-    #[error("'Error: '{0}' field does not exist.")]
-    FieldNotFound(String),
-    #[error("Error: '{0}' is not a scalar field.")]
-    NonScalarField(String),
-    #[error("Error: '{0}' is NaN.")]
-    NaNField(String),
-}
-
-impl std::fmt::Debug for ScalarError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "\n\t{}", self)?;
-        Ok(())
     }
 }

@@ -4,6 +4,7 @@
 mod vars;
 
 use ndarray::{Array, Ix2};
+use std::process;
 
 // use crate::vars::bfield::Bfield;
 use crate::vars::bfield::Bfield;
@@ -24,12 +25,23 @@ pub struct Nc {
 
 impl Nc {
     /// Creates a `Scalars` by extracting data from `f`.
-    pub fn open(path: PathBuf) -> Result<Nc, netcdf::Error> {
-        let netcdf_file = netcdf::open(path.to_str().expect("Path not found"))?;
+    pub fn open(path: PathBuf) -> Result<Nc, &'static str> {
+        let path_str = match path.to_str() {
+            Some(path) => path,
+            None => return Err("path does not exist."),
+        };
+        let netcdf_file = match netcdf::open(path_str) {
+            Ok(file) => file,
+            Err(_) => return Err("Error opening NetCDF file."),
+        };
 
+        let err_msg = String::from("Error creating Nc: ");
         let nc = Nc {
             path,
-            scalars: Scalars::from_netcdf_file(&netcdf_file),
+            scalars: Scalars::build(&netcdf_file).unwrap_or_else(|err| {
+                println!("{}{}", &err_msg, err.0 + err.1);
+                process::exit(1);
+            }),
             coords: Coords::from_netcdf_file(&netcdf_file),
             currents: Currents::from_netcdf_file(&netcdf_file),
             bfield: Bfield::from_netcdf_file(&netcdf_file),
