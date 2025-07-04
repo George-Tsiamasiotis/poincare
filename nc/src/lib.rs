@@ -6,6 +6,7 @@ mod vars;
 use ndarray::{Array, Ix2};
 
 // use crate::vars::bfield::Bfield;
+use crate::vars::bfield::Bfield;
 use crate::vars::coords::Coords;
 use crate::vars::currents::Currents;
 use crate::vars::scalars::Scalars;
@@ -18,6 +19,7 @@ pub struct Nc {
     pub scalars: Scalars,
     pub coords: Coords,
     pub currents: Currents,
+    pub bfield: Bfield,
 }
 
 impl Nc {
@@ -30,6 +32,7 @@ impl Nc {
             scalars: Scalars::from_netcdf_file(&netcdf_file),
             coords: Coords::from_netcdf_file(&netcdf_file),
             currents: Currents::from_netcdf_file(&netcdf_file),
+            bfield: Bfield::from_netcdf_file(&netcdf_file),
         };
 
         Nc::check_dims(&nc);
