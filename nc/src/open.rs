@@ -3,12 +3,14 @@
 use std::path::PathBuf;
 
 use crate::NcError;
+use crate::scalars::Scalars;
 
 #[derive(Debug)]
 /// NetCDF equilibrium data.
 pub struct NcData {
     /// Path to NetCDF file.
     pub path: PathBuf,
+    pub scalars: Scalars,
 }
 
 impl NcData {
@@ -21,17 +23,19 @@ impl NcData {
         }
 
         // If this fails, its due to an underlying library error.
-        let _nc_file = match netcdf::open(&path) {
+        let nc_file = match netcdf::open(&path) {
             Ok(nc_file) => nc_file,
             Err(liberror) => {
                 return Err(LibraryError {
-                    source: liberror,
+                    source: liberror, // Error::Netcdf
                     reason: "Error opening NetCDF file".into(),
                 });
             }
         };
 
-        let rec = NcData { path };
+        let scalars = Scalars::build(&nc_file)?;
+
+        let rec = NcData { path, scalars };
 
         Ok(rec)
     }

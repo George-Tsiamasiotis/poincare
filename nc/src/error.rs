@@ -16,6 +16,27 @@ pub enum NcError {
     /// Given path is not a file.
     #[error("Error: '{0}': File not found.")]
     FileNotFound(PathBuf),
+
+    /// Variable does not exist.
+    #[error("Error: '{0}' variable not found.")]
+    VariableNotFound(Box<str>),
+
+    /// Variable exists, but has no data.
+    #[error("Error: '{0}' variable is empty.")]
+    EmptyVariable(Box<str>),
+
+    /// Expected scalar value, found array.
+    #[error("Error: '{0}' variable is not scalar.")]
+    NotScalar(Box<str>),
+
+    /// Supplied wrong `Extends` dimensionality to `get_values()`.
+    /// Lower level error: netcdf::Error::DimensionalityMismatch.
+    #[error("Error extracting '{field}': {source}.")]
+    DimensionError {
+        #[source]
+        source: netcdf::Error,
+        field: Box<str>,
+    },
 }
 
 impl std::fmt::Debug for NcError {
