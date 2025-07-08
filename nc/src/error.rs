@@ -1,8 +1,7 @@
-//! Custom error types.
-
 use std::path::PathBuf;
 
 #[derive(thiserror::Error)]
+/// Custom error types.
 pub enum NcError {
     /// Catches errors from the wrapped netcdf library.
     /// Lower level error: netcdf::Error::Netcdf.
@@ -29,7 +28,12 @@ pub enum NcError {
     #[error("Error: '{0}' variable is not scalar.")]
     NotScalar(Box<str>),
 
-    /// Supplied wrong `Extends` dimensionality to `get_values()`.
+    /// Errors from netcdf's `get_values()` functions. Those are hard to track but should be
+    /// basically unreachable.
+    #[error("Error extracting values from '{0}' variable.")]
+    GetValuesError(Box<str>),
+
+    /// Supplied wrong `Extents` dimensionality to `get_values()`.
     /// Lower level error: netcdf::Error::DimensionalityMismatch.
     #[error("Error extracting '{field}': {source}.")]
     DimensionError {

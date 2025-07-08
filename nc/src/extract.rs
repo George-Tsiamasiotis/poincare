@@ -11,13 +11,11 @@ fn extract_variable<'a>(
         .ok_or(NcError::VariableNotFound(name.into()))
 }
 
-/// Returns a `Variable`'s length.
-pub(crate) fn get_variable_length(f: &netcdf::File, name: &str) -> Result<usize, NcError> {
-    // `.len()` works for N-dimensional arrays too; it returns the total number of elements.
-    let len = extract_variable(f, name)?.len();
-    match len {
-        0 => Err(NcError::EmptyVariable(name.into())),
-        1.. => Ok(len),
+/// Checks if a `Variable` is empty.
+pub(crate) fn check_if_empty(var: &netcdf::Variable) -> Result<(), NcError> {
+    match var.len() {
+        1.. => Ok(()),
+        0 => Err(NcError::EmptyVariable(var.name().into())),
     }
 }
 
@@ -26,42 +24,33 @@ pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcErro
     use crate::NcError::*;
 
     let var = extract_variable(f, name)?;
+    check_if_empty(&var)?;
 
-    if get_variable_length(f, name)? > 1 {
+    // `var.dimensions()` is () for netcdf's scalar `Variables`. This is probably equivalent to
+    // `var.len() == 0`
+    if !var.dimensions().is_empty() {
         return Err(NotScalar(name.into()));
     }
 
     match var.get_value::<f64, _>(..) {
         Ok(value) => Ok(value),
-        Err(dim_err) => Err(DimensionError {
-            source: dim_err, // Error::DimensionMismatch
-            field: name.into(),
-        }),
+        Err(_) => Err(NcError::GetValuesError(var.name().into())),
     }
 }
 
 /// Extracts a 1D `Variable` and returns its values.
 pub(crate) fn extract_1d_var(f: &netcdf::File, name: &str) -> Result<Vec<f64>, NcError> {
-    use crate::NcError::*;
-
     let var = extract_variable(f, name)?;
-
-    if var.len() == 0 {
-        return Err(EmptyVariable(name.into()));
-    }
+    check_if_empty(&var)?;
 
     match var.get_values::<f64, _>(..) {
         Ok(value) => Ok(value),
-        Err(err) => Err(DimensionError {
-            source: err, // Error::DimensionMismatch
-            field: name.into(),
-        }),
+        Err(_) => Err(NcError::GetValuesError(var.name().into())),
     }
 }
 
 /// Extracts a variable from the NetCDF file and prepends the first value (value closest to the
 /// magnetic axis) at index 0.
-#[allow(dead_code)] // Needed later
 pub(crate) fn extract_var_with_first_axis_value(
     f: &netcdf::File,
     name: &str,
