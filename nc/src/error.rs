@@ -28,18 +28,26 @@ pub enum NcError {
     #[error("Error: '{0}' variable is not scalar.")]
     NotScalar(Box<str>),
 
+    /// Attempted to extract non-2D variable as 2D.
+    #[error("Error: '{0}' variable is not 2-dimensional.")]
+    Not2D(Box<str>),
+
     /// Errors from netcdf's `get_values()` functions. Those are hard to track but should be
     /// basically unreachable.
-    #[error("Error extracting values from '{0}' variable.")]
-    GetValuesError(Box<str>),
+    #[error("Error extracting values from '{name}' variable: {source}.")]
+    GetValuesError {
+        #[source]
+        source: netcdf::Error,
+        name: Box<str>,
+    },
 
     /// Supplied wrong `Extents` dimensionality to `get_values()`.
     /// Lower level error: netcdf::Error::DimensionalityMismatch.
-    #[error("Error extracting '{field}': {source}.")]
+    #[error("Error extracting '{name}': {source}.")]
     DimensionError {
         #[source]
         source: netcdf::Error,
-        field: Box<str>,
+        name: Box<str>,
     },
 }
 

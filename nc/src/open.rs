@@ -73,6 +73,6 @@ mod test {
     fn file_not_found() {
         let x: Result<NcData, NcError> = NcData::open("not_an_existing_path".into());
         assert!(x.is_err());
-        assert!(matches!(x.err().unwrap(), NcError::FileNotFound { .. }));
+        assert!(matches!(x.unwrap_err(), NcError::FileNotFound { .. }));
     }
 }
