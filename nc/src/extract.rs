@@ -1,5 +1,8 @@
+//! Functions for extracting and checking data from the NetCDF file.
+
 use crate::NcError;
 
+/// Extracts a `Variable` fron a NetCDF file.
 fn extract_variable<'a>(
     f: &'a netcdf::File,
     name: &'a str,
@@ -8,18 +11,25 @@ fn extract_variable<'a>(
         .ok_or(NcError::VariableNotFound(name.into()))
 }
 
-/// Extracts a scalar (0D) variable.
+/// Returns a `Variable`'s length.
+pub(crate) fn get_variable_length(f: &netcdf::File, name: &str) -> Result<usize, NcError> {
+    // `.len()` works for N-dimensional arrays too; it returns the total number of elements.
+    let len = extract_variable(f, name)?.len();
+    match len {
+        0 => Err(NcError::EmptyVariable(name.into())),
+        1.. => Ok(len),
+    }
+}
+
+/// Extracts a scalar (0D) `Variable`'s value.
 pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcError> {
     use crate::NcError::*;
 
     let var = extract_variable(f, name)?;
 
-    // `.len()` works for N-dimensional arrays too; it returns the total number of elements.
-    match var.len() {
-        0 => return Err(EmptyVariable(name.into())),
-        1 => (),
-        2.. => return Err(NotScalar(name.into())),
-    };
+    if get_variable_length(f, name)? > 1 {
+        return Err(NotScalar(name.into()));
+    }
 
     match var.get_value::<f64, _>(..) {
         Ok(value) => Ok(value),
@@ -30,7 +40,8 @@ pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcErro
     }
 }
 
-pub(crate) fn extract_1d(f: &netcdf::File, name: &str) -> Result<Vec<f64>, NcError> {
+/// Extracts a 1D `Variable` and returns its values.
+pub(crate) fn extract_1d_var(f: &netcdf::File, name: &str) -> Result<Vec<f64>, NcError> {
     use crate::NcError::*;
 
     let var = extract_variable(f, name)?;
@@ -46,4 +57,27 @@ pub(crate) fn extract_1d(f: &netcdf::File, name: &str) -> Result<Vec<f64>, NcErr
             field: name.into(),
         }),
     }
+}
+
+/// Extracts a variable from the NetCDF file and prepends the first value (value closest to the
+/// magnetic axis) at index 0.
+#[allow(dead_code)] // Needed later
+pub(crate) fn extract_var_with_first_axis_value(
+    f: &netcdf::File,
+    name: &str,
+) -> Result<Vec<f64>, NcError> {
+    let mut v: Vec<f64> = extract_1d_var(f, name)?;
+    v.insert(0, v[0]);
+    Ok(v)
+}
+
+/// Extracts a variable from the NetCDF file and prepends `element` at index 0.
+pub(crate) fn extract_var_with_axis_value(
+    f: &netcdf::File,
+    name: &str,
+    element: f64,
+) -> Result<Vec<f64>, NcError> {
+    let mut v: Vec<f64> = extract_1d_var(f, name)?;
+    v.insert(0, element);
+    Ok(v)
 }

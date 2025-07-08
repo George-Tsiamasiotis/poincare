@@ -1,8 +1,10 @@
-//! Handles NetCDF file opening.
+//! Handles NetCDF file opening and `NcData` creation.
 
 use std::path::PathBuf;
 
 use crate::NcError;
+use crate::coords::Coords;
+use crate::currents::Currents;
 use crate::scalars::Scalars;
 
 #[derive(Debug)]
@@ -10,7 +12,12 @@ use crate::scalars::Scalars;
 pub struct NcData {
     /// Path to NetCDF file.
     pub path: PathBuf,
+    /// Equilibrium's scalar values.
     pub scalars: Scalars,
+    /// Equilibrium's coordinate variables.
+    pub coords: Coords,
+    /// Plasma toroidal (I) and poloidal (g) currents.
+    pub currents: Currents,
 }
 
 impl NcData {
@@ -34,10 +41,26 @@ impl NcData {
         };
 
         let scalars = Scalars::build(&nc_file)?;
+        let coords = Coords::build(&nc_file)?;
+        let currents = Currents::build(&nc_file)?;
 
-        let rec = NcData { path, scalars };
+        let rec = NcData {
+            path,
+            scalars,
+            coords,
+            currents,
+        };
 
         Ok(rec)
+    }
+}
+
+impl std::fmt::Display for NcData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "NcData:")?;
+        write!(f, "{}", self.scalars)?;
+        write!(f, "{}", self.coords)?;
+        write!(f, "{}", self.currents)
     }
 }
 

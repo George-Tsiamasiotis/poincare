@@ -5,6 +5,8 @@ mod error;
 mod extract;
 mod open;
 
+mod coords;
+mod currents;
 mod scalars;
 
 pub use error::NcError;
