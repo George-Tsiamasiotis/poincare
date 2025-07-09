@@ -132,7 +132,7 @@ mod test {
     use super::*;
     use NcError::*;
 
-    static VAR_LENGTH: usize = 10;
+    static VAR_LENGTH: usize = 5;
 
     /// Creates a phony NetCDF file for use across the tests.
     fn phony_netcdf() -> netcdf::FileMut {
@@ -156,6 +156,8 @@ mod test {
 
         f.add_variable::<f64>("2dvar", &["dim1", "dim2"])
             .expect("Could not add 2d variable to phony.nc");
+        f.add_variable::<i32>("int_var", &["dim1"])
+            .expect("Error adding variable to phony.nc");
 
         f
     }
@@ -171,10 +173,10 @@ mod test {
     }
 
     #[test]
-    fn test_check_if_empty() {
+    fn test_check_if_empty() -> Result<(), NcError> {
         let f = phony_netcdf();
-        let var = extract_variable(&f, "var").unwrap();
-        let empty_var = extract_variable(&f, "empty_var").unwrap();
+        let var = extract_variable(&f, "var")?;
+        let empty_var = extract_variable(&f, "empty_var")?;
 
         assert_eq!(var.len(), VAR_LENGTH);
         assert_eq!(empty_var.len(), 0);
@@ -182,6 +184,7 @@ mod test {
             check_if_empty(&empty_var).unwrap_err(),
             EmptyVariable(_)
         ));
+        Ok(())
     }
 
     #[test]
@@ -218,5 +221,26 @@ mod test {
         assert!(matches!(values1d.unwrap_err(), Not2D(_)));
         assert!(matches!(empty_values.unwrap_err(), EmptyVariable(_)));
         assert!(matches!(err_values.unwrap_err(), VariableNotFound(_)));
+    }
+
+    #[test]
+    fn test_axis_value() -> Result<(), NcError> {
+        let mut f = phony_netcdf();
+        let data: [i32; VAR_LENGTH] = [2, 3, 4, 5, 6];
+
+        f.variable_mut("int_var")
+            .expect("Error extracting mutable variable.")
+            .put_values(&data, ..)
+            .expect("Error putting values to variable");
+
+        assert_eq!(
+            Array1::<i32>::from_vec(vec![1, 2, 3, 4, 5, 6]),
+            extract_var_with_axis_value(&f, "int_var", 1)?
+        );
+        assert_eq!(
+            Array1::<i32>::from_vec(vec![2, 2, 3, 4, 5, 6]),
+            extract_var_with_first_axis_value(&f, "int_var")?
+        );
+        Ok(())
     }
 }
