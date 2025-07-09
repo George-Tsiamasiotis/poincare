@@ -135,36 +135,31 @@ mod test {
     static VAR_LENGTH: usize = 5;
 
     /// Creates a phony NetCDF file for use across the tests.
-    fn phony_netcdf() -> netcdf::FileMut {
+    fn phony_netcdf() -> Result<netcdf::FileMut, netcdf::Error> {
         let path = std::env::temp_dir().join("phony.nc");
         let path_str = path.to_str().expect("*Probably* won't fail.");
 
-        let mut f = netcdf::create(path_str).expect("Error creating phony.nc.");
-        std::fs::remove_file(path).expect("Should never fail");
+        let mut f = netcdf::create(path_str)?;
+        std::fs::remove_file(path).expect("Failed to delete temp phony.nc");
 
-        f.add_dimension("dim1", VAR_LENGTH)
-            .expect("Could not add dimension to phony.nc");
-        f.add_dimension("dim2", VAR_LENGTH)
-            .expect("Could not add dimension to phony.nc");
-        f.add_variable::<f64>("var", &["dim2"])
-            .expect("Could not add variable to phony.nc");
+        f.add_dimension("dim1", VAR_LENGTH)?;
+        f.add_dimension("dim2", VAR_LENGTH)?;
+        f.add_variable::<f64>("var", &["dim2"])?;
 
-        f.add_dimension("empty_dim", 0)
-            .expect("Could not add dimension to phony.nc");
-        f.add_variable::<f64>("empty_var", &["empty_dim"])
-            .expect("Could not add variable to phony.nc");
+        f.add_dimension("empty_dim", 0)?;
+        f.add_variable::<f64>("empty_var", &["empty_dim"])?;
 
-        f.add_variable::<f64>("2dvar", &["dim1", "dim2"])
-            .expect("Could not add 2d variable to phony.nc");
-        f.add_variable::<i32>("int_var", &["dim1"])
-            .expect("Error adding variable to phony.nc");
+        f.add_variable::<f64>("2dvar", &["dim1", "dim2"])?;
+        f.add_variable::<i32>("int_var", &["dim1"])?;
 
-        f
+        f.add_variable::<i32>("number", &[])?
+            .put_values(&[18], ..)?;
+        Ok(f)
     }
 
     #[test]
     fn test_extract_variable() {
-        let f = phony_netcdf();
+        let f = phony_netcdf().unwrap();
         assert!(extract_variable(&f, "var").is_ok());
         assert!(matches!(
             extract_variable(&f, "not_a_var").unwrap_err(),
@@ -174,7 +169,7 @@ mod test {
 
     #[test]
     fn test_check_if_empty() -> Result<(), NcError> {
-        let f = phony_netcdf();
+        let f = phony_netcdf().unwrap();
         let var = extract_variable(&f, "var")?;
         let empty_var = extract_variable(&f, "empty_var")?;
 
@@ -188,16 +183,17 @@ mod test {
     }
 
     #[test]
-    fn test_extract_scalar() {
-        /*
-        Not sure how scalars are defined in NetCDF. The documentation states that they
-        used to be treated as a 0D array, but it's been struckthrough.
-        */
+    fn test_extract_scalar() -> Result<(), NcError> {
+        let f = phony_netcdf().unwrap();
+        let scalar: i32 = extract_scalar(&f, "number")?;
+
+        assert_eq!(scalar, 18i32);
+        Ok(())
     }
 
     #[test]
     fn test_extract_1d_var() {
-        let f = phony_netcdf();
+        let f = phony_netcdf().unwrap();
         let values1d = extract_1d_var::<f64>(&f, "var");
         let values2d = extract_1d_var::<f64>(&f, "2dvar");
         let empty_values = extract_1d_var::<f64>(&f, "empty_var");
@@ -211,7 +207,7 @@ mod test {
 
     #[test]
     fn test_ectract_2d_var() {
-        let f = phony_netcdf();
+        let f = phony_netcdf().unwrap();
         let values2d = extract_2d_var::<f64>(&f, "2dvar");
         let values1d = extract_2d_var::<f64>(&f, "var");
         let empty_values = extract_2d_var::<f64>(&f, "empty_var");
@@ -225,7 +221,7 @@ mod test {
 
     #[test]
     fn test_axis_value() -> Result<(), NcError> {
-        let mut f = phony_netcdf();
+        let mut f = phony_netcdf().unwrap();
         let data: [i32; VAR_LENGTH] = [2, 3, 4, 5, 6];
 
         f.variable_mut("int_var")
