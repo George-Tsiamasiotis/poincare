@@ -1,7 +1,7 @@
 //! Functions for extracting and checking data from the NetCDF file.
 
 use crate::NcError;
-use ndarray::{Array, Ix2};
+use ndarray::{Array1, Array2, ArrayView, Axis, array};
 
 /// Extracts a `Variable` fron a NetCDF file.
 fn extract_variable<'a>(
@@ -21,7 +21,10 @@ fn check_if_empty(var: &netcdf::Variable) -> Result<(), NcError> {
 }
 
 /// Extracts a scalar (0D) `Variable`'s value.
-pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcError> {
+pub(crate) fn extract_scalar<T>(f: &netcdf::File, name: &str) -> Result<T, NcError>
+where
+    T: netcdf::NcTypeDescriptor + std::marker::Copy,
+{
     use crate::NcError::*;
 
     let var = extract_variable(f, name)?;
@@ -33,7 +36,7 @@ pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcErro
         return Err(NotScalar(name.into()));
     }
 
-    match var.get_value::<f64, _>(..) {
+    match var.get_value::<T, _>(..) {
         Ok(value) => Ok(value),
         Err(err) => Err(NcError::GetValuesError {
             name: var.name().into(),
@@ -43,7 +46,10 @@ pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcErro
 }
 
 /// Extracts a 1D `Variable` and returns its values.
-pub(crate) fn extract_1d_var(f: &netcdf::File, name: &str) -> Result<Vec<f64>, NcError> {
+pub(crate) fn extract_1d_var<T>(f: &netcdf::File, name: &str) -> Result<Array1<T>, NcError>
+where
+    T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
+{
     let var = extract_variable(f, name)?;
     check_if_empty(&var)?;
 
@@ -51,8 +57,10 @@ pub(crate) fn extract_1d_var(f: &netcdf::File, name: &str) -> Result<Vec<f64>, N
         return Err(NcError::Not1D(var.name().into()));
     }
 
-    match var.get_values::<f64, _>(..) {
-        Ok(value) => Ok(value),
+    let mut data = Array1::<T>::default(var.len());
+
+    match var.get_into(data.view_mut(), ..) {
+        Ok(()) => Ok(data),
         Err(err) => Err(NcError::GetValuesError {
             name: var.name().into(),
             source: err,
@@ -61,7 +69,10 @@ pub(crate) fn extract_1d_var(f: &netcdf::File, name: &str) -> Result<Vec<f64>, N
 }
 
 /// Extracts a 2D `Variable` and returns its values as an `ndarray`.
-pub(crate) fn extract_2d_var(f: &netcdf::File, name: &str) -> Result<Array<f64, Ix2>, NcError> {
+pub(crate) fn extract_2d_var<T>(f: &netcdf::File, name: &str) -> Result<Array2<T>, NcError>
+where
+    T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
+{
     let var = extract_variable(f, name)?;
     check_if_empty(&var)?;
 
@@ -73,7 +84,7 @@ pub(crate) fn extract_2d_var(f: &netcdf::File, name: &str) -> Result<Array<f64, 
     let dims = var.dimensions().to_vec();
     let shape = (dims[0].len(), dims[1].len());
 
-    let mut data = Array::<f64, Ix2>::zeros(shape);
+    let mut data = Array2::<T>::default(shape);
 
     match var.get_into(data.view_mut(), (.., ..)) {
         Ok(()) => Ok(data),
@@ -86,24 +97,34 @@ pub(crate) fn extract_2d_var(f: &netcdf::File, name: &str) -> Result<Array<f64, 
 
 /// Extracts a variable from the NetCDF file and prepends the first value (value closest to the
 /// magnetic axis) at index 0.
-pub(crate) fn extract_var_with_first_axis_value(
+pub(crate) fn extract_var_with_first_axis_value<T>(
     f: &netcdf::File,
     name: &str,
-) -> Result<Vec<f64>, NcError> {
-    let mut v: Vec<f64> = extract_1d_var(f, name)?;
-    v.insert(0, v[0]);
-    Ok(v)
+) -> Result<Array1<T>, NcError>
+where
+    T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
+{
+    let arr: Array1<T> = extract_1d_var(f, name)?;
+    extract_var_with_axis_value(f, name, arr[0])
 }
 
 /// Extracts a variable from the NetCDF file and prepends `element` at index 0.
-pub(crate) fn extract_var_with_axis_value(
+pub(crate) fn extract_var_with_axis_value<T>(
     f: &netcdf::File,
     name: &str,
-    element: f64,
-) -> Result<Vec<f64>, NcError> {
-    let mut v: Vec<f64> = extract_1d_var(f, name)?;
-    v.insert(0, element);
-    Ok(v)
+    element: T,
+) -> Result<Array1<T>, NcError>
+where
+    T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
+{
+    let arr: Array1<T> = extract_1d_var(f, name)?;
+    let view = ArrayView::from(&arr);
+    let mut prepend: Array1<T> = array![element];
+    // This is not expected to fail since both arrays are guranteed to be of the same shape (1,).
+    match prepend.append(Axis(0), view) {
+        Ok(()) => Ok(prepend),
+        Err(_) => unreachable!("Shape mismatch in prepending axis value."),
+    }
 }
 
 #[cfg(test)]
@@ -174,10 +195,10 @@ mod test {
     #[test]
     fn test_extract_1d_var() {
         let f = phony_netcdf();
-        let values1d = extract_1d_var(&f, "var");
-        let values2d = extract_1d_var(&f, "2dvar");
-        let empty_values = extract_1d_var(&f, "empty_var");
-        let err_values = extract_1d_var(&f, "not_a_var");
+        let values1d = extract_1d_var::<f64>(&f, "var");
+        let values2d = extract_1d_var::<f64>(&f, "2dvar");
+        let empty_values = extract_1d_var::<f64>(&f, "empty_var");
+        let err_values = extract_1d_var::<f64>(&f, "not_a_var");
 
         assert!(values1d.is_ok());
         assert!(matches!(values2d.unwrap_err(), Not1D(_)));
@@ -188,10 +209,10 @@ mod test {
     #[test]
     fn test_ectract_2d_var() {
         let f = phony_netcdf();
-        let values2d = extract_2d_var(&f, "2dvar");
-        let values1d = extract_2d_var(&f, "var");
-        let empty_values = extract_2d_var(&f, "empty_var");
-        let err_values = extract_2d_var(&f, "not_a_var");
+        let values2d = extract_2d_var::<f64>(&f, "2dvar");
+        let values1d = extract_2d_var::<f64>(&f, "var");
+        let empty_values = extract_2d_var::<f64>(&f, "empty_var");
+        let err_values = extract_2d_var::<f64>(&f, "not_a_var");
 
         assert!(values2d.is_ok());
         assert!(matches!(values1d.unwrap_err(), Not2D(_)));

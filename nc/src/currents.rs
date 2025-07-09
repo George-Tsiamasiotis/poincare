@@ -1,5 +1,7 @@
 //! `Currents` implementation.
 
+use ndarray::Array1;
+
 use crate::{
     NcError,
     extract::{extract_var_with_axis_value, extract_var_with_first_axis_value},
@@ -9,9 +11,9 @@ use crate::{
 /// Representation of the equilibrium's **I** and **g** toroidal and poloidal plasma currents.
 pub struct Currents {
     /// Plasma toroidal current **I**.
-    pub i: Vec<f64>,
+    pub i: Array1<f64>,
     /// Plasma poloidal current **g**.
-    pub g: Vec<f64>,
+    pub g: Array1<f64>,
     /// The toroidal currrent's length.
     pub i_len: usize,
     /// The poloidal currrent's length.

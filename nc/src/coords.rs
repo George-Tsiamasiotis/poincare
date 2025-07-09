@@ -1,5 +1,7 @@
 //! `Coords` implementation.
 
+use ndarray::Array1;
+
 use crate::{
     NcError,
     extract::{extract_1d_var, extract_var_with_axis_value},
@@ -9,9 +11,9 @@ use crate::{
 /// Representation of the equilibrium's `psi` and `boozer_theta` coordinates.
 pub struct Coords {
     /// The ψ coordinate.
-    pub psi: Vec<f64>,
+    pub psi: Array1<f64>,
     /// The θ coordinate.
-    pub theta: Vec<f64>,
+    pub theta: Array1<f64>,
     /// The ψ coordinate's length.
     pub psi_len: usize,
     /// The θ coordinate's length.
@@ -27,7 +29,7 @@ impl Coords {
     pub(crate) fn build(f: &netcdf::File) -> Result<Self, NcError> {
         // Extrapolate psi to later extrapolate all other variables to include a value
         // at the axis.
-        let psi: Vec<f64> = extract_var_with_axis_value(f, "psi", 0.0)?;
+        let psi: Array1<f64> = extract_var_with_axis_value(f, "psi", 0.0)?;
         let theta = extract_1d_var(f, "boozer_theta")?;
 
         let psi_len = psi.len();

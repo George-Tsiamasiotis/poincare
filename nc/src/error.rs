@@ -13,27 +13,27 @@ pub enum NcError {
     },
 
     /// Given path is not a file.
-    #[error("Error: '{0}': File not found.")]
+    #[error("'{0}': File not found.")]
     FileNotFound(PathBuf),
 
     /// Variable does not exist.
-    #[error("Error: '{0}' variable not found.")]
+    #[error("'{0}' variable not found.")]
     VariableNotFound(Box<str>),
 
     /// Variable exists, but has no data.
-    #[error("Error: '{0}' variable is empty.")]
+    #[error("'{0}' variable is empty.")]
     EmptyVariable(Box<str>),
 
     /// Expected scalar value, found array.
-    #[error("Error: '{0}' variable is not scalar.")]
+    #[error("'{0}' variable is not scalar.")]
     NotScalar(Box<str>),
 
     /// Attempted to extract non-1D variable as 1D.
-    #[error("Error: '{0}' variable is not 1-dimensional.")]
+    #[error("'{0}' variable is not 1-dimensional.")]
     Not1D(Box<str>),
 
     /// Attempted to extract non-2D variable as 2D.
-    #[error("Error: '{0}' variable is not 2-dimensional.")]
+    #[error("'{0}' variable is not 2-dimensional.")]
     Not2D(Box<str>),
 
     /// Errors from netcdf's `get_values()` functions. Those are hard to track but should be
@@ -57,6 +57,6 @@ pub enum NcError {
 
 impl std::fmt::Debug for NcError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "\n{}", self)
+        writeln!(f, "{}", self)
     }
 }

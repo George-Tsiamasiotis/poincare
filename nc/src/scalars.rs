@@ -24,7 +24,7 @@ impl Scalars {
         // Whether the variable is empty or not is checked in the extraction.
         let psi_wall = match extract_1d_var(f, "psi")?.last() {
             Some(last) => *last,
-            None => unreachable!(),
+            None => unreachable!("Error extracting psi_wall."),
         };
 
         Ok(Self {
