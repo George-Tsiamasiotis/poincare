@@ -12,3 +12,8 @@ mod scalars;
 
 pub use error::NcError;
 pub use open::NcData;
+
+pub use bfield::Bfield;
+pub use coords::Coords;
+pub use currents::Currents;
+pub use scalars::Scalars;

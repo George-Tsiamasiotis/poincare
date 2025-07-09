@@ -8,7 +8,6 @@ use crate::coords::Coords;
 use crate::currents::Currents;
 use crate::scalars::Scalars;
 
-#[derive(Debug)]
 /// NetCDF equilibrium data.
 pub struct NcData {
     /// Path to NetCDF file.
@@ -60,12 +59,14 @@ impl NcData {
     }
 }
 
-impl std::fmt::Display for NcData {
+impl std::fmt::Debug for NcData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "NcData:")?;
-        write!(f, "{}", self.scalars)?;
-        write!(f, "{}", self.coords)?;
-        write!(f, "{}", self.currents)
+        f.debug_struct("NcData")
+            .field("scalars", &self.scalars)
+            .field("coords", &self.coords)
+            .field("currents", &self.currents)
+            .field("bfield", &self.bfield)
+            .finish()
     }
 }
 

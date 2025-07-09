@@ -33,5 +33,5 @@ pub(crate) fn phony_netcdf_path() -> Result<PathBuf, netcdf::Error> {
     f.add_variable::<f64>("b_field_norm", &["psi", "boozer_theta"])?
         .put(b_values.view(), (.., ..))?;
 
-    Ok(f.path()?)
+    f.path()
 }

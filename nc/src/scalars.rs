@@ -2,7 +2,6 @@
 
 use crate::{NcError, extract::extract_1d_var, extract::extract_scalar};
 
-#[derive(Debug)]
 /// Representation of an equilibrium's scalar values. `baxis` and `raxis` are the only quantities
 /// in non-normalized units, and are not used in any calculations.
 pub struct Scalars {
@@ -35,11 +34,11 @@ impl Scalars {
     }
 }
 
-impl std::fmt::Display for Scalars {
+impl std::fmt::Debug for Scalars {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(
+        write!(
             f,
-            "Scalars:\n\tbaxis = {:.5} [T],\n\traxis = {:.5} [m],\n\tpsi_wall = {:.5}",
+            "Scalars: {{\n    baxis = {:.7} [T],\n    raxis = {:.7} [m],\n    psi_wall = {:.7},\n}}",
             self.baxis, self.raxis, self.psi_wall
         )
     }

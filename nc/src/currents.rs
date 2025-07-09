@@ -7,7 +7,6 @@ use crate::{
     extract::{extract_var_with_axis_value, extract_var_with_first_axis_value},
 };
 
-#[derive(Debug)]
 /// Representation of the equilibrium's **I** and **g** toroidal and poloidal plasma currents.
 pub struct Currents {
     /// Plasma toroidal current **I**.
@@ -15,13 +14,13 @@ pub struct Currents {
     /// Plasma poloidal current **g**.
     pub g: Array1<f64>,
     /// The toroidal currrent's length.
-    pub i_len: usize,
+    i_len: usize,
     /// The poloidal currrent's length.
-    pub g_len: usize,
+    g_len: usize,
     /// The toroidal current's span (min, max).
-    pub i_span: (f64, f64),
+    i_span: (f64, f64),
     /// The poloidal current's span (min, max).
-    pub g_span: (f64, f64),
+    g_span: (f64, f64),
 }
 
 impl Currents {
@@ -50,18 +49,19 @@ impl Currents {
     }
 }
 
-impl std::fmt::Display for Currents {
+impl std::fmt::Debug for Currents {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Currents:")?;
+        writeln!(f, "Currents: {{")?;
         writeln!(
             f,
-            "\ti = [{:.5}, ..., {:.5}], len = {},",
+            "        i = [{:.7}, ..., {:.7}], len = {},",
             self.i_span.0, self.i_span.1, self.i_len,
         )?;
         writeln!(
             f,
-            "\tg = [{:.5}, ..., {:.5}], len = {},",
+            "        g = [{:.7}, ..., {:.7}], len = {},",
             self.g_span.0, self.g_span.1, self.g_len,
-        )
+        )?;
+        write!(f, "}}")
     }
 }

@@ -186,8 +186,10 @@ mod test {
     fn test_extract_scalar() -> Result<(), NcError> {
         let f = phony_netcdf().unwrap();
         let scalar: i32 = extract_scalar(&f, "number")?;
+        let not_a_scalar = extract_scalar::<f64>(&f, "var");
 
         assert_eq!(scalar, 18i32);
+        assert!(matches!(not_a_scalar.unwrap_err(), NotScalar(_)));
         Ok(())
     }
 

@@ -7,7 +7,6 @@ use crate::{
     extract::{extract_1d_var, extract_var_with_axis_value},
 };
 
-#[derive(Debug)]
 /// Representation of the equilibrium's `psi` and `boozer_theta` coordinates.
 pub struct Coords {
     /// The ψ coordinate.
@@ -50,18 +49,19 @@ impl Coords {
     }
 }
 
-impl std::fmt::Display for Coords {
+impl std::fmt::Debug for Coords {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Coords:")?;
+        writeln!(f, "Coords: {{")?;
         writeln!(
             f,
-            "\ttheta = [{:.5}, ..., {:.5}], len = {},",
-            self.theta_span.0, self.theta_span.1, self.theta_len,
+            "      psi = [{:.7}, ..., {:.7}], len = {},",
+            self.psi_span.0, self.psi_span.1, self.psi_len,
         )?;
         writeln!(
             f,
-            "\t  psi = [{:.5}, ..., {:.5}], len = {},",
-            self.psi_span.0, self.psi_span.1, self.psi_len,
-        )
+            "    theta = [{:.7}, ..., {:.7}], len = {},",
+            self.theta_span.0, self.theta_span.1, self.theta_len,
+        )?;
+        write!(f, "}}")
     }
 }
