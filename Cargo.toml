@@ -1,4 +1,15 @@
 [workspace]
 resolver = "3"
-members = ["nc"]
+members = ["tokamak_netcdf"]
+default-members = ["tokamak_netcdf"]
 exclude = ["usr*"]
+
+[workspace.package]
+authors = ["George Tsiamasiotis"]
+version = "0.1.0"
+readme = "README.md"
+license = " GPL-3.0-only"
+repository = "https://github.com/George-Tsiamasiotis/poincare.git"
+keywords = ["nc", "netcdf", "tokamak"]
+categories = ["science", "simulation", "visualization"]
+description = "A collection of packages for calculating poincare maps of particles in a tokamak device."

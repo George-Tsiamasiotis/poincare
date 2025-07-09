@@ -1,4 +1,4 @@
-use nc::NcData;
+use tokamak_netcdf::NcData;
 
 mod common;
 
