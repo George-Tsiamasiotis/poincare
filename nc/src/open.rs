@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 
 use crate::NcError;
+use crate::bfield::Bfield;
 use crate::coords::Coords;
 use crate::currents::Currents;
 use crate::scalars::Scalars;
@@ -18,6 +19,8 @@ pub struct NcData {
     pub coords: Coords,
     /// Plasma toroidal (I) and poloidal (g) currents.
     pub currents: Currents,
+    /// Magnetic field strength.
+    pub bfield: Bfield,
 }
 
 impl NcData {
@@ -43,12 +46,14 @@ impl NcData {
         let scalars = Scalars::build(&nc_file)?;
         let coords = Coords::build(&nc_file)?;
         let currents = Currents::build(&nc_file)?;
+        let bfield = Bfield::build(&nc_file)?;
 
         let rec = NcData {
             path,
             scalars,
             coords,
             currents,
+            bfield,
         };
 
         Ok(rec)

@@ -5,6 +5,7 @@ mod error;
 mod extract;
 mod open;
 
+mod bfield;
 mod coords;
 mod currents;
 mod scalars;
