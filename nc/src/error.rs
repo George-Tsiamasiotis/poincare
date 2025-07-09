@@ -28,6 +28,10 @@ pub enum NcError {
     #[error("Error: '{0}' variable is not scalar.")]
     NotScalar(Box<str>),
 
+    /// Attempted to extract non-1D variable as 1D.
+    #[error("Error: '{0}' variable is not 1-dimensional.")]
+    Not1D(Box<str>),
+
     /// Attempted to extract non-2D variable as 2D.
     #[error("Error: '{0}' variable is not 2-dimensional.")]
     Not2D(Box<str>),

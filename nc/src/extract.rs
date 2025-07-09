@@ -13,7 +13,7 @@ fn extract_variable<'a>(
 }
 
 /// Checks if a `Variable` is empty.
-pub(crate) fn check_if_empty(var: &netcdf::Variable) -> Result<(), NcError> {
+fn check_if_empty(var: &netcdf::Variable) -> Result<(), NcError> {
     match var.len() {
         1.. => Ok(()),
         0 => Err(NcError::EmptyVariable(var.name().into())),
@@ -46,6 +46,10 @@ pub(crate) fn extract_scalar(f: &netcdf::File, name: &str) -> Result<f64, NcErro
 pub(crate) fn extract_1d_var(f: &netcdf::File, name: &str) -> Result<Vec<f64>, NcError> {
     let var = extract_variable(f, name)?;
     check_if_empty(&var)?;
+
+    if var.dimensions().len() != 1 {
+        return Err(NcError::Not1D(var.name().into()));
+    }
 
     match var.get_values::<f64, _>(..) {
         Ok(value) => Ok(value),
@@ -117,15 +121,20 @@ mod test {
         let mut f = netcdf::create(path_str).expect("Error creating phony.nc.");
         std::fs::remove_file(path).expect("Should never fail");
 
-        f.add_dimension("dim", VAR_LENGTH)
+        f.add_dimension("dim1", VAR_LENGTH)
             .expect("Could not add dimension to phony.nc");
-        f.add_variable::<f64>("var", &["dim"])
+        f.add_dimension("dim2", VAR_LENGTH)
+            .expect("Could not add dimension to phony.nc");
+        f.add_variable::<f64>("var", &["dim2"])
             .expect("Could not add variable to phony.nc");
 
         f.add_dimension("empty_dim", 0)
             .expect("Could not add dimension to phony.nc");
         f.add_variable::<f64>("empty_var", &["empty_dim"])
             .expect("Could not add variable to phony.nc");
+
+        f.add_variable::<f64>("2dvar", &["dim1", "dim2"])
+            .expect("Could not add 2d variable to phony.nc");
 
         f
     }
@@ -160,5 +169,33 @@ mod test {
         Not sure how scalars are defined in NetCDF. The documentation states that they
         used to be treated as a 0D array, but it's been struckthrough.
         */
+    }
+
+    #[test]
+    fn test_extract_1d_var() {
+        let f = phony_netcdf();
+        let values1d = extract_1d_var(&f, "var");
+        let values2d = extract_1d_var(&f, "2dvar");
+        let empty_values = extract_1d_var(&f, "empty_var");
+        let err_values = extract_1d_var(&f, "not_a_var");
+
+        assert!(values1d.is_ok());
+        assert!(matches!(values2d.unwrap_err(), Not1D(_)));
+        assert!(matches!(empty_values.unwrap_err(), EmptyVariable(_)));
+        assert!(matches!(err_values.unwrap_err(), VariableNotFound(_)));
+    }
+
+    #[test]
+    fn test_ectract_2d_var() {
+        let f = phony_netcdf();
+        let values2d = extract_2d_var(&f, "2dvar");
+        let values1d = extract_2d_var(&f, "var");
+        let empty_values = extract_2d_var(&f, "empty_var");
+        let err_values = extract_2d_var(&f, "not_a_var");
+
+        assert!(values2d.is_ok());
+        assert!(matches!(values1d.unwrap_err(), Not2D(_)));
+        assert!(matches!(empty_values.unwrap_err(), EmptyVariable(_)));
+        assert!(matches!(err_values.unwrap_err(), VariableNotFound(_)));
     }
 }
