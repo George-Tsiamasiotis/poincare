@@ -2,6 +2,7 @@ use ndarray::Array1;
 use rgsl::{Interp, InterpType};
 
 use crate::Result;
+use crate::acc::Accelerator;
 use crate::{SplineError, SplineType};
 
 /// Interface to GSL's splines.
@@ -24,6 +25,7 @@ pub struct Spline {
     pub(crate) interp_type: InterpType,
     /// Pointer to a newly allocated `Interp(gsl_interp)` object.
     pub(crate) gsl_spline: Interp,
+    pub(crate) accel: Accelerator,
     // Copies of xdata and ydata to pass as slice references to gsl_interp_init. There might be a
     // better way to do this directly from xdata and ydata without copying.
     pub(crate) xa: Vec<f64>,
@@ -48,6 +50,8 @@ impl Spline {
         let gsl_spline =
             Interp::new(spline_type.into(), size).ok_or(SplineError::GSLInterpAlloc)?;
 
+        let accel = Accelerator::build()?;
+
         let mut s = Spline {
             spline_type,
             xdata,
@@ -59,6 +63,7 @@ impl Spline {
             yspan: (ymin, ymax),
             interp_type: spline_type.into(),
             gsl_spline,
+            accel,
         };
 
         s.init()?;
@@ -114,6 +119,7 @@ impl std::fmt::Debug for Spline {
                     self.yspan.0, self.yspan.1, self.size
                 ),
             )
+            .field("Accelerator", &self.accel)
             .finish()
     }
 }

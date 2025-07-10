@@ -1,3 +1,4 @@
+mod acc;
 mod error;
 mod spline;
 mod spline_types;
