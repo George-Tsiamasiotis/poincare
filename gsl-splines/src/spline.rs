@@ -1,5 +1,5 @@
 use ndarray::Array1;
-use rgsl::{Interp, InterpType};
+use rgsl::InterpType;
 
 use crate::Result;
 use crate::acc::Accelerator;
@@ -24,8 +24,8 @@ pub struct Spline {
     /// Corresponding GSL's natice `gsl_interp_type`.
     pub(crate) interp_type: InterpType,
     /// Pointer to a newly allocated `Interp(gsl_interp)` object.
-    pub(crate) gsl_spline: Interp,
-    pub(crate) accel: Accelerator,
+    pub(crate) gsl_spline: rgsl::Spline,
+    pub(crate) acc: Accelerator,
     // Copies of xdata and ydata to pass as slice references to gsl_interp_init. There might be a
     // better way to do this directly from xdata and ydata without copying.
     pub(crate) xa: Vec<f64>,
@@ -47,8 +47,7 @@ impl Spline {
         let ymin = ydata[0];
         let ymax = ydata[size - 1];
 
-        let gsl_spline =
-            Interp::new(spline_type.into(), size).ok_or(SplineError::GSLInterpAlloc)?;
+        let gsl_spline = rgsl::Spline::new(spline_type.into(), size).expect("TODO");
 
         let accel = Accelerator::build()?;
 
@@ -63,7 +62,7 @@ impl Spline {
             yspan: (ymin, ymax),
             interp_type: spline_type.into(),
             gsl_spline,
-            accel,
+            acc: accel,
         };
 
         s.init()?;
@@ -79,6 +78,10 @@ impl Spline {
             Ok(()) => Ok(()),
             Err(val) => Err(SplineError::GSLInterpInit { value: val }),
         }
+    }
+
+    pub fn ev(&mut self, x: f64) -> f64 {
+        self.gsl_spline.eval(x, &mut self.acc.gsl_accel)
     }
 
     /// Checks that the supplied `x` and `y` data are valid.
@@ -119,7 +122,7 @@ impl std::fmt::Debug for Spline {
                     self.yspan.0, self.yspan.1, self.size
                 ),
             )
-            .field("Accelerator", &self.accel)
+            .field("Accelerator", &self.acc)
             .finish()
     }
 }
