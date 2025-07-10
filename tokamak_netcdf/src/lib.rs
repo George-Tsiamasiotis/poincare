@@ -1,5 +1,24 @@
 //! Provides a cleaner and more suitable NetCDF interface for use with reconstructed equilibria
 //! from tokamak devices.
+//!
+//! ## Example
+//!
+//! ```no_run
+//! # use std::path::PathBuf;
+//! # use tokamak_netcdf::NcError;
+//! #
+//! # fn main() -> Result<(), NcError> {
+//! #
+//!     // Path must be relative to the directory where "cargo run" is called
+//!     let path = PathBuf::from(r"./reconstructed/data.nc");
+//!     let nc_data = tokamak_netcdf::NcData::open(path)?;
+//!
+//!     println!("{:#?}", nc_data);
+//!
+//! # Ok(())
+//! # }
+//! ```
+//!
 
 mod error;
 mod extract;

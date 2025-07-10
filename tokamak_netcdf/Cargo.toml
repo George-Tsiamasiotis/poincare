@@ -8,6 +8,7 @@ use with reconstructed equilibira."""
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+documentation.workspace = true
 
 [dependencies]
 ndarray = "0.16.1"
