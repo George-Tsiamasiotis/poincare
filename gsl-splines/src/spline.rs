@@ -1,5 +1,5 @@
 use ndarray::Array1;
-use rgsl::{self, InterpType};
+use rgsl::{Interp, InterpType};
 
 use crate::Result;
 use crate::{SplineError, SplineType};
@@ -22,6 +22,8 @@ pub struct Spline {
     #[allow(dead_code)]
     /// Corresponding GSL's natice `gsl_interp_type`.
     pub(crate) interp_type: InterpType,
+    /// Pointer to allocated `Interp` native object.
+    pub(crate) gsl_spline: Interp,
 }
 
 impl Spline {
@@ -36,6 +38,8 @@ impl Spline {
         let ymin = ydata[0];
         let ymax = ydata[size - 1];
 
+        let gsl_spline = Interp::new(typ.into(), size).ok_or(SplineError::GSLInterpAlloc)?;
+
         let s = Spline {
             spline_type: typ,
             xdata,
@@ -44,6 +48,7 @@ impl Spline {
             xspan: (xmin, xmax),
             yspan: (ymin, ymax),
             interp_type: typ.into(),
+            gsl_spline,
         };
         Ok(s)
     }

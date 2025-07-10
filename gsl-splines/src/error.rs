@@ -10,6 +10,8 @@ pub enum SplineError {
     /// 'x' and `y` datasets have differnet length.
     #[error("Supplied datasets must be 1D and of equal length.")]
     DatasetMismatch,
+    #[error("Error calling gsl_interp_alloc.")]
+    GSLInterpAlloc,
 }
 
 impl std::fmt::Debug for SplineError {
