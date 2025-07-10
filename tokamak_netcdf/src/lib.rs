@@ -19,6 +19,10 @@
 //! # }
 //! ```
 //!
+//! ## Note
+//!
+//! [libnetcdf](https://github.com/Unidata/netcdf-c) is linked statically, since it is not
+//! available by default in most systems.
 
 mod error;
 mod extract;

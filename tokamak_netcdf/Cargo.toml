@@ -1,6 +1,6 @@
 [package]
 name = "tokamak_netcdf"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 keywords = ["nc", "netcdf", "tokamak"]
 description = """ A Package for handling NetCDF files and creating a more suitable interface for
@@ -12,5 +12,5 @@ documentation.workspace = true
 
 [dependencies]
 ndarray = "0.16.1"
-netcdf = { version = "0.11.0", features = ["ndarray"] }
+netcdf = { version = "0.11.0", features = ["ndarray", "static"] }
 thiserror = "2.0.12"
