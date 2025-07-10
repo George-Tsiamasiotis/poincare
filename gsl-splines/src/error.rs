@@ -12,6 +12,8 @@ pub enum SplineError {
     DatasetMismatch,
     #[error("Error calling gsl_interp_alloc.")]
     GSLInterpAlloc,
+    #[error("Error calling gsl_interp_init: {value:?}.")]
+    GSLInterpInit { value: rgsl::Value },
 }
 
 impl std::fmt::Debug for SplineError {

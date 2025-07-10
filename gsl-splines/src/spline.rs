@@ -22,14 +22,21 @@ pub struct Spline {
     #[allow(dead_code)]
     /// Corresponding GSL's natice `gsl_interp_type`.
     pub(crate) interp_type: InterpType,
-    /// Pointer to allocated `Interp` native object.
+    /// Pointer to a newly allocated `Interp(gsl_interp)` object.
     pub(crate) gsl_spline: Interp,
+    // Copies of xdata and ydata to pass as slice references to gsl_interp_init. There might be a
+    // better way to do this directly from xdata and ydata without copying.
+    pub(crate) xa: Vec<f64>,
+    pub(crate) ya: Vec<f64>,
 }
 
 impl Spline {
     /// Creates a new `Spline`.
-    pub fn build(typ: SplineType, xdata: Array1<f64>, ydata: Array1<f64>) -> Result<Self> {
+    pub fn build(spline_type: SplineType, xdata: Array1<f64>, ydata: Array1<f64>) -> Result<Self> {
         Spline::check_data(&xdata, &ydata)?;
+
+        let xa = xdata.view().to_vec();
+        let ya = ydata.view().to_vec();
 
         // 1D, non-empty arrays of the same length
         let size = xdata.len();
@@ -38,19 +45,35 @@ impl Spline {
         let ymin = ydata[0];
         let ymax = ydata[size - 1];
 
-        let gsl_spline = Interp::new(typ.into(), size).ok_or(SplineError::GSLInterpAlloc)?;
+        let gsl_spline =
+            Interp::new(spline_type.into(), size).ok_or(SplineError::GSLInterpAlloc)?;
 
-        let s = Spline {
-            spline_type: typ,
+        let mut s = Spline {
+            spline_type,
             xdata,
             ydata,
+            xa,
+            ya,
             size,
             xspan: (xmin, xmax),
             yspan: (ymin, ymax),
-            interp_type: typ.into(),
+            interp_type: spline_type.into(),
             gsl_spline,
         };
+
+        s.init()?;
+
         Ok(s)
+    }
+
+    /// Initializes the interpolation object from the xdata and ydata. The object only holds
+    /// references to the data, and only stores the static state computed from the data.
+    fn init(&mut self) -> Result<()> {
+        // `init()` returns a `Value` variant representing an error code.
+        match self.gsl_spline.init(&self.xa, &self.ya) {
+            Ok(()) => Ok(()),
+            Err(val) => Err(SplineError::GSLInterpInit { value: val }),
+        }
     }
 
     /// Checks that the supplied `x` and `y` data are valid.
