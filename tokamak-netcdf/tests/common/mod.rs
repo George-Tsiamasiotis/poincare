@@ -4,7 +4,7 @@ use std::path::PathBuf;
 /// Creates a phony NetCDF file simulating the actual equilibrium.
 pub(crate) fn phony_netcdf_path() -> Result<PathBuf, netcdf::Error> {
     let path = std::env::temp_dir().join("phony.nc");
-    let path_str = path.to_str().expect("*Probably* won't fail.");
+    let path_str = path.to_str().unwrap();
 
     let mut f = netcdf::create(path_str)?;
 

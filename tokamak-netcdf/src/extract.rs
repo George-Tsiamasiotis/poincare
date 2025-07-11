@@ -137,10 +137,10 @@ mod test {
     /// Creates a phony NetCDF file for use across the tests.
     fn phony_netcdf() -> Result<netcdf::FileMut, netcdf::Error> {
         let path = std::env::temp_dir().join("phony.nc");
-        let path_str = path.to_str().expect("*Probably* won't fail.");
+        let path_str = path.to_str().unwrap();
 
         let mut f = netcdf::create(path_str)?;
-        std::fs::remove_file(path).expect("Failed to delete temp phony.nc");
+        std::fs::remove_file(path).unwrap();
 
         f.add_dimension("dim1", VAR_LENGTH)?;
         f.add_dimension("dim2", VAR_LENGTH)?;
@@ -160,7 +160,7 @@ mod test {
     #[test]
     fn test_extract_variable() {
         let f = phony_netcdf().unwrap();
-        assert!(extract_variable(&f, "var").is_ok());
+        extract_variable(&f, "var").unwrap();
         assert!(matches!(
             extract_variable(&f, "not_a_var").unwrap_err(),
             VariableNotFound(_)
@@ -201,7 +201,7 @@ mod test {
         let empty_values = extract_1d_var::<f64>(&f, "empty_var");
         let err_values = extract_1d_var::<f64>(&f, "not_a_var");
 
-        assert!(values1d.is_ok());
+        values1d.unwrap();
         assert!(matches!(values2d.unwrap_err(), Not1D(_)));
         assert!(matches!(empty_values.unwrap_err(), EmptyVariable(_)));
         assert!(matches!(err_values.unwrap_err(), VariableNotFound(_)));
@@ -215,7 +215,7 @@ mod test {
         let empty_values = extract_2d_var::<f64>(&f, "empty_var");
         let err_values = extract_2d_var::<f64>(&f, "not_a_var");
 
-        assert!(values2d.is_ok());
+        values2d.unwrap();
         assert!(matches!(values1d.unwrap_err(), Not2D(_)));
         assert!(matches!(empty_values.unwrap_err(), EmptyVariable(_)));
         assert!(matches!(err_values.unwrap_err(), VariableNotFound(_)));
