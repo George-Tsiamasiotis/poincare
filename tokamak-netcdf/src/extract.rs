@@ -1,19 +1,16 @@
 //! Functions for extracting and checking data from the NetCDF file.
 
-use crate::NcError;
+use crate::{NcError, Result};
 use ndarray::{Array1, Array2, ArrayView, Axis, array};
 
 /// Extracts a `Variable` fron a NetCDF file.
-fn extract_variable<'a>(
-    f: &'a netcdf::File,
-    name: &'a str,
-) -> Result<netcdf::Variable<'a>, NcError> {
+fn extract_variable<'a>(f: &'a netcdf::File, name: &'a str) -> Result<netcdf::Variable<'a>> {
     f.variable(name)
         .ok_or(NcError::VariableNotFound(name.into()))
 }
 
 /// Checks if a `Variable` is empty.
-fn check_if_empty(var: &netcdf::Variable) -> Result<(), NcError> {
+fn check_if_empty(var: &netcdf::Variable) -> Result<()> {
     match var.len() {
         1.. => Ok(()),
         0 => Err(NcError::EmptyVariable(var.name().into())),
@@ -21,7 +18,7 @@ fn check_if_empty(var: &netcdf::Variable) -> Result<(), NcError> {
 }
 
 /// Extracts a scalar (0D) `Variable`'s value.
-pub(crate) fn extract_scalar<T>(f: &netcdf::File, name: &str) -> Result<T, NcError>
+pub(crate) fn extract_scalar<T>(f: &netcdf::File, name: &str) -> Result<T>
 where
     T: netcdf::NcTypeDescriptor + std::marker::Copy,
 {
@@ -46,7 +43,7 @@ where
 }
 
 /// Extracts a 1D `Variable` and returns its values.
-pub(crate) fn extract_1d_var<T>(f: &netcdf::File, name: &str) -> Result<Array1<T>, NcError>
+pub(crate) fn extract_1d_var<T>(f: &netcdf::File, name: &str) -> Result<Array1<T>>
 where
     T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
 {
@@ -69,7 +66,7 @@ where
 }
 
 /// Extracts a 2D `Variable` and returns its values as an `ndarray`.
-pub(crate) fn extract_2d_var<T>(f: &netcdf::File, name: &str) -> Result<Array2<T>, NcError>
+pub(crate) fn extract_2d_var<T>(f: &netcdf::File, name: &str) -> Result<Array2<T>>
 where
     T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
 {
@@ -100,7 +97,7 @@ where
 pub(crate) fn extract_var_with_first_axis_value<T>(
     f: &netcdf::File,
     name: &str,
-) -> Result<Array1<T>, NcError>
+) -> Result<Array1<T>>
 where
     T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
 {
@@ -113,7 +110,7 @@ pub(crate) fn extract_var_with_axis_value<T>(
     f: &netcdf::File,
     name: &str,
     element: T,
-) -> Result<Array1<T>, NcError>
+) -> Result<Array1<T>>
 where
     T: netcdf::NcTypeDescriptor + std::marker::Copy + std::default::Default,
 {
@@ -135,7 +132,7 @@ mod test {
     static VAR_LENGTH: usize = 5;
 
     /// Creates a phony NetCDF file for use across the tests.
-    fn phony_netcdf() -> Result<netcdf::FileMut, netcdf::Error> {
+    fn phony_netcdf() -> std::result::Result<netcdf::FileMut, netcdf::Error> {
         let path = std::env::temp_dir().join("phony.nc");
         let path_str = path.to_str().unwrap();
 
@@ -168,7 +165,7 @@ mod test {
     }
 
     #[test]
-    fn test_check_if_empty() -> Result<(), NcError> {
+    fn test_check_if_empty() -> Result<()> {
         let f = phony_netcdf().unwrap();
         let var = extract_variable(&f, "var")?;
         let empty_var = extract_variable(&f, "empty_var")?;
@@ -183,7 +180,7 @@ mod test {
     }
 
     #[test]
-    fn test_extract_scalar() -> Result<(), NcError> {
+    fn test_extract_scalar() -> Result<()> {
         let f = phony_netcdf().unwrap();
         let scalar: i32 = extract_scalar(&f, "number")?;
         let not_a_scalar = extract_scalar::<f64>(&f, "var");
@@ -222,7 +219,7 @@ mod test {
     }
 
     #[test]
-    fn test_axis_value() -> Result<(), NcError> {
+    fn test_axis_value() -> Result<()> {
         let mut f = phony_netcdf().unwrap();
         let data: [i32; VAR_LENGTH] = [2, 3, 4, 5, 6];
 

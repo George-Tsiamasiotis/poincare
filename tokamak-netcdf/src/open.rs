@@ -2,11 +2,11 @@
 
 use std::path::PathBuf;
 
-use crate::NcError;
 use crate::bfield::Bfield;
 use crate::coords::Coords;
 use crate::currents::Currents;
 use crate::scalars::Scalars;
+use crate::{NcError, Result};
 
 /// NetCDF equilibrium data.
 pub struct NcData {
@@ -24,7 +24,7 @@ pub struct NcData {
 
 impl NcData {
     /// Creates an NcData from a NetCDF file.
-    pub fn open(path: PathBuf) -> Result<Self, NcError> {
+    pub fn open(path: PathBuf) -> Result<Self> {
         use NcError::*;
 
         if !path.exists() {

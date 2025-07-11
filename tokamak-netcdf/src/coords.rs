@@ -3,7 +3,7 @@
 use ndarray::Array1;
 
 use crate::{
-    NcError,
+    Result,
     extract::{extract_1d_var, extract_var_with_axis_value},
 };
 
@@ -25,7 +25,7 @@ pub struct Coords {
 
 impl Coords {
     /// Creates a `Coords` containing the coordinate variables from the NetCDF file.
-    pub(crate) fn build(f: &netcdf::File) -> Result<Self, NcError> {
+    pub(crate) fn build(f: &netcdf::File) -> Result<Self> {
         // Extrapolate psi to later extrapolate all other variables to include a value
         // at the axis.
         let psi: Array1<f64> = extract_var_with_axis_value(f, "psi", 0.0)?;

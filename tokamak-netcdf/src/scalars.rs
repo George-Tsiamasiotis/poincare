@@ -1,6 +1,6 @@
 //! `Scalars` implementation.
 
-use crate::{NcError, extract::extract_1d_var, extract::extract_scalar};
+use crate::{Result, extract::extract_1d_var, extract::extract_scalar};
 
 /// Representation of an equilibrium's scalar values. `baxis` and `raxis` are the only quantities
 /// in non-normalized units, and are not used in any calculations.
@@ -15,7 +15,7 @@ pub struct Scalars {
 
 impl Scalars {
     /// Creates a `Scalars` containing the needed scalar values from the NetCDF file.
-    pub(crate) fn build(f: &netcdf::File) -> Result<Self, NcError> {
+    pub(crate) fn build(f: &netcdf::File) -> Result<Self> {
         let baxis = extract_scalar(f, "Baxis")?;
         let raxis = extract_scalar(f, "raxis")?;
 

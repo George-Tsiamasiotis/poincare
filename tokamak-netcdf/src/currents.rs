@@ -3,7 +3,7 @@
 use ndarray::Array1;
 
 use crate::{
-    NcError,
+    Result,
     extract::{extract_var_with_axis_value, extract_var_with_first_axis_value},
 };
 
@@ -25,7 +25,7 @@ pub struct Currents {
 
 impl Currents {
     /// Creates a `Currents` containing the plasma currents **I** and **g** from the NetCDF file.
-    pub(crate) fn build(f: &netcdf::File) -> Result<Self, NcError> {
+    pub(crate) fn build(f: &netcdf::File) -> Result<Self> {
         let g = extract_var_with_first_axis_value(f, "g_norm")?;
         let i = extract_var_with_axis_value(f, "I_norm", 0.0)?;
 

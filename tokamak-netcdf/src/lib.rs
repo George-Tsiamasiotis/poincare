@@ -40,3 +40,5 @@ pub use bfield::Bfield;
 pub use coords::Coords;
 pub use currents::Currents;
 pub use scalars::Scalars;
+
+pub type Result<T> = std::result::Result<T, NcError>;

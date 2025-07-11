@@ -1,6 +1,6 @@
 use ndarray::Array2;
 
-use crate::{NcError, extract::extract_2d_var};
+use crate::{Result, extract::extract_2d_var};
 
 /// Representation of the equilibrium's magnetic field **B**.
 pub struct Bfield {
@@ -12,7 +12,7 @@ pub struct Bfield {
 
 impl Bfield {
     /// Creates a `Bfield` containing the magnetic field data from the NetCDF file.
-    pub(crate) fn build(f: &netcdf::File) -> Result<Self, NcError> {
+    pub(crate) fn build(f: &netcdf::File) -> Result<Self> {
         let b = extract_2d_var(f, "b_field_norm")?;
 
         let shape: (usize, usize) = (b.dim().0, b.dim().1);
