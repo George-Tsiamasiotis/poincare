@@ -21,6 +21,7 @@ htmlcov/
 
 # User space
 usr/
+usr*/
 
 
 # Log files
